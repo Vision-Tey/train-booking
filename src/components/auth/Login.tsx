@@ -4,40 +4,50 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Train, Mail, Lock } from "lucide-react";
+import { Train, Mail, Lock, Loader2 } from "lucide-react";
 import Navbar from "../layout/Navbar";
 import Footer from "../layout/Footer";
+import { useAuth } from "@/lib/auth";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { signIn } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
     // Validate form
     if (!email) {
       setError("Please enter your email address");
+      setIsLoading(false);
       return;
     }
 
     if (!password) {
       setError("Please enter your password");
+      setIsLoading(false);
       return;
     }
 
-    // In a real app, this would call an API to authenticate the user
-    // For now, we'll just simulate a successful login
-    console.log("Login attempt with:", { email, password, rememberMe });
-
-    // Simulate successful login
-    setTimeout(() => {
-      navigate("/");
-    }, 1000);
+    try {
+      const { error } = await signIn(email, password);
+      if (error) {
+        setError(error.message || "Failed to sign in");
+      } else {
+        navigate("/");
+      }
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -130,8 +140,15 @@ const Login: React.FC = () => {
               </div>
             </div>
 
-            <Button type="submit" className="w-full py-6">
-              Sign in
+            <Button type="submit" className="w-full py-6" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                "Sign in"
+              )}
             </Button>
 
             <div className="text-center text-sm">

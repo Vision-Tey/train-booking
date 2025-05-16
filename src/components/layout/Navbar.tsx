@@ -8,14 +8,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Menu, Train, User } from "lucide-react";
+import { Menu, Train, User, Shield } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
 interface NavbarProps {
   isLoggedIn?: boolean;
   userName?: string;
 }
 
-const Navbar = ({ isLoggedIn = false, userName = "Guest" }: NavbarProps) => {
+const Navbar = ({ isLoggedIn, userName = "Guest" }: NavbarProps) => {
+  const { user, profile, isAdmin, signOut } = useAuth();
+  const isAuthenticated = isLoggedIn || !!user;
+  const displayName = userName || profile?.full_name || "User";
+
   return (
     <header className="w-full h-20 bg-white border-b border-gray-200 shadow-sm fixed top-0 left-0 z-50">
       <div className="container mx-auto h-full flex items-center justify-between px-4">
@@ -52,20 +57,23 @@ const Navbar = ({ isLoggedIn = false, userName = "Guest" }: NavbarProps) => {
 
         {/* User Authentication */}
         <div className="flex items-center space-x-4">
-          {isLoggedIn ? (
+          {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center space-x-2">
                   <Avatar>
                     <AvatarImage
-                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`}
-                      alt={userName}
+                      src={
+                        profile?.avatar_url ||
+                        `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`
+                      }
+                      alt={displayName}
                     />
                     <AvatarFallback>
-                      {userName.substring(0, 2).toUpperCase()}
+                      {displayName.substring(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="hidden md:inline">{userName}</span>
+                  <span className="hidden md:inline">{displayName}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -79,10 +87,16 @@ const Navbar = ({ isLoggedIn = false, userName = "Guest" }: NavbarProps) => {
                     My Bookings
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link to="/logout" className="w-full">
-                    Logout
-                  </Link>
+                {isAdmin && (
+                  <DropdownMenuItem>
+                    <Link to="/admin" className="w-full flex items-center">
+                      <Shield className="h-4 w-4 mr-2" />
+                      Admin Panel
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onClick={() => signOut()}>
+                  Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

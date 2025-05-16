@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Train, Mail, Lock, User, Phone } from "lucide-react";
+import { Train, Mail, Lock, User, Phone, Loader2 } from "lucide-react";
 import Navbar from "../layout/Navbar";
 import Footer from "../layout/Footer";
+import { useAuth } from "@/lib/auth";
 
 const Register: React.FC = () => {
   const [fullName, setFullName] = useState("");
@@ -16,62 +17,70 @@ const Register: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { signUp } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
     // Validate form
     if (!fullName) {
       setError("Please enter your full name");
+      setIsLoading(false);
       return;
     }
 
     if (!email) {
       setError("Please enter your email address");
+      setIsLoading(false);
       return;
     }
 
     if (!phone) {
       setError("Please enter your phone number");
+      setIsLoading(false);
       return;
     }
 
     if (!password) {
       setError("Please enter a password");
+      setIsLoading(false);
       return;
     }
 
     if (password.length < 8) {
       setError("Password must be at least 8 characters long");
+      setIsLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match");
+      setIsLoading(false);
       return;
     }
 
     if (!agreeTerms) {
       setError("You must agree to the terms and conditions");
+      setIsLoading(false);
       return;
     }
 
-    // In a real app, this would call an API to register the user
-    // For now, we'll just simulate a successful registration
-    console.log("Registration attempt with:", {
-      fullName,
-      email,
-      phone,
-      password,
-      agreeTerms,
-    });
-
-    // Simulate successful registration
-    setTimeout(() => {
-      navigate("/login");
-    }, 1000);
+    try {
+      const { error } = await signUp(email, password, { fullName, phone });
+      if (error) {
+        setError(error.message || "Failed to create account");
+      } else {
+        navigate("/login");
+      }
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -217,8 +226,15 @@ const Register: React.FC = () => {
               </div>
             </div>
 
-            <Button type="submit" className="w-full py-6">
-              Create account
+            <Button type="submit" className="w-full py-6" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                "Create account"
+              )}
             </Button>
 
             <div className="text-center text-sm">
